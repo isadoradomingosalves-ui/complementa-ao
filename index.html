@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calendário da Turma</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+ 
+  <div id="login-screen" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 sm:p-8 border border-slate-100">
+      <div class="text-center mb-6">
+        <div class="w-14 h-14 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
+          <i data-lucide="graduation-cap" class="w-8 h-8"></i>
+        </div>
+        <h1 class="text-2xl font-bold text-slate-900">Agenda da Turma</h1>
+        <p class="text-slate-500 text-sm mt-1">Selecione sua turma e seu perfil</p>
+      </div>
+
+     
+      <div class="mb-4">
+        <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Selecione a Turma</label>
+        <select id="select-turma" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium bg-white">
+          <optgroup label="1º ANO">
+            <option value="1_ANO_A">1° ANO A</option>
+            <option value="1_ANO_B">1° ANO B</option>
+            <option value="1_ANO_C">1° ANO C</option>
+            <option value="1_ANO_ADM">1° ANO ADM</option>
+            <option value="1_ANO_DS">1° ANO DS</option>
+          </optgroup>
+          <optgroup label="2º ANO">
+            <option value="2_ANO_A">2° ANO A</option>
+            <option value="2_ANO_B">2° ANO B</option>
+            <option value="2_ANO_C">2° ANO C</option>
+            <option value="2_ANO_ADM">2° ANO ADM</option>
+            <option value="2_ANO_DS">2° ANO DS</option>
+          </optgroup>
+          <optgroup label="3º ANO">
+            <option value="3_ANO_A">3° ANO A</option>
+            <option value="3_ANO_B">3° ANO B</option>
+            <option value="3_ANO_C">3° ANO C</option>
+            <option value="3_ANO_ADM">3° ANO ADM</option>
+            <option value="3_ANO_DS">3° ANO DS</option>
+          </optgroup>
+        </select>
+      </div>
+
+      <div class="space-y-4">
+        
+        <button type="button" onclick="loginAs('aluno')" class="w-full p-4 rounded-xl border border-slate-200 hover:border-indigo-500 hover:bg-indigo-50/50 transition-all text-left flex items-center justify-between group">
+          <div class="flex items-center space-x-3">
+            <div class="p-2 bg-blue-100 text-blue-600 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors">
+              <i data-lucide="user" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <p class="font-semibold text-slate-800">Entrar como Aluno</p>
+              <p class="text-xs text-slate-500">Visualizar eventos da turma</p>
+            </div>
+          </div>
+          <i data-lucide="arrow-right" class="w-5 h-5 text-slate-400 group-hover:text-indigo-600"></i>
+        </button>
+
+        <div class="border-t border-slate-100 my-4"></div>
+
+        
+        <form id="prof-login-form" onsubmit="handleProfLogin(event)" class="space-y-3">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500">Acesso Professor / Gestão</label>
+          <div class="relative">
+            <input type="password" id="prof-key" required placeholder="Digite a senha do professor" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+          </div>
+          <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2">
+            <i data-lucide="shield-check" class="w-4 h-4"></i> Entrar como Professor
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+ 
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="p-2 bg-indigo-600 text-white rounded-xl">
+          <i data-lucide="calendar" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-slate-900 leading-tight flex items-center gap-2">
+            Calendário <span id="current-turma-badge" class="bg-indigo-50 text-indigo-700 text-xs px-2 py-0.5 rounded-md border border-indigo-200"></span>
+          </h1>
+          <span id="role-badge" class="text-xs px-2 py-0.5 rounded-full font-medium bg-slate-100 text-slate-600">Aguardando login</span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button id="btn-add-event" type="button" onclick="openModal()" class="hidden px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium transition-colors flex items-center gap-1.5 shadow-sm">
+          <i data-lucide="plus" class="w-4 h-4"></i> <span class="hidden sm:inline">Novo Evento</span>
+        </button>
+        <button type="button" onclick="logout()" class="p-2 hover:bg-slate-100 rounded-xl text-slate-600 transition-colors" title="Trocar de Turma / Sair">
+          <i data-lucide="log-out" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+  
+    <section class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6 flex flex-col">
+      <div class="flex items-center justify-between mb-6">
+        <h2 id="current-month-year" class="text-xl font-bold text-slate-900 capitalize"></h2>
+        <div class="flex items-center space-x-2">
+          <button type="button" onclick="prevMonth()" class="p-2 hover:bg-slate-100 rounded-xl text-slate-600 transition-colors">
+            <i data-lucide="chevron-left" class="w-5 h-5"></i>
+          </button>
+          <button type="button" onclick="todayMonth()" class="px-3 py-1.5 hover:bg-slate-100 rounded-xl text-xs font-semibold text-slate-600 transition-colors">Hoje</button>
+          <button type="button" onclick="nextMonth()" class="p-2 hover:bg-slate-100 rounded-xl text-slate-600 transition-colors">
+            <i data-lucide="chevron-right" class="w-5 h-5"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-7 text-center font-semibold text-xs text-slate-400 mb-2 uppercase tracking-wider">
+        <div>Dom</div><div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
+      </div>
+
+      <div id="calendar-grid" class="grid grid-cols-7 gap-1 sm:gap-2 flex-1"></div>
+    </section>
+
+    <section class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6 flex flex-col">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold text-slate-900 flex items-center gap-2">
+          <i data-lucide="clock" class="w-5 h-5 text-indigo-600"></i> Próximos Eventos
+        </h3>
+        <select id="filter-category" onchange="renderEventsList()" class="text-xs bg-slate-50 border border-slate-200 rounded-lg px-2 py-1 outline-none">
+          <option value="all">Todas categorias</option>
+          <option value="prova">Provas</option>
+          <option value="trabalho">Trabalhos</option>
+          <option value="feriado">Feriados</option>
+          <option value="ferias">Férias</option>
+          <option value="aviso">Avisos</option>
+        </select>
+      </div>
+
+      <div id="events-list" class="space-y-3 flex-1 overflow-y-auto max-h-[500px] pr-1"></div>
+    </section>
+  </main>
+
+  
+  <div id="event-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl">
+      <div class="flex justify-between items-center mb-4">
+        <h3 id="modal-title" class="font-bold text-lg text-slate-900">Novo Evento</h3>
+        <button type="button" onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      
+      <form id="event-form" onsubmit="saveEvent(event)" class="space-y-4">
+        <input type="hidden" id="event-id">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Título do Evento</label>
+          <input type="text" id="event-title" required placeholder="Ex: Prova de Matemática" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Categoria</label>
+            <select id="event-category" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+              <option value="prova">Prova</option>
+              <option value="trabalho">Trabalho</option>
+              <option value="feriado">Feriado</option>
+              <option value="ferias">Férias Escolares</option>
+              <option value="aviso">Aviso Geral</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Disciplina/Matéria</label>
+            <input type="text" id="event-subject" placeholder="Ex: Geral, História" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Data</label>
+          <input type="date" id="event-date" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Descrição / Detalhes</label>
+          <textarea id="event-desc" rows="3" placeholder="Orientações da tarefa..." class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal()" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl text-sm font-medium hover:bg-slate-50">Cancelar</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-sm font-medium hover:bg-indigo-700">Salvar Evento</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let currentUserRole = null;
+    let selectedTurma = '';
+    let currentDate = new Date();
+    let events = [];
+
+    const CATEGORIES = {
+      prova: { label: 'Prova', bg: 'bg-red-100', text: 'text-red-700' },
+      trabalho: { label: 'Trabalho', bg: 'bg-blue-100', text: 'text-blue-700' },
+      feriado: { label: 'Feriado', bg: 'bg-emerald-100', text: 'text-emerald-700' },
+      ferias: { label: 'Férias', bg: 'bg-pink-100', text: 'text-pink-700' },
+      aviso: { label: 'Aviso', bg: 'bg-amber-100', text: 'text-amber-700' }
+    };
+
+   
+    function loadTurmaEvents() {
+      const storageKey = `turma_events_${selectedTurma}`;
+      const savedData = localStorage.getItem(storageKey);
+      events = savedData ? JSON.parse(savedData) : [];
+    }
+
+   
+    function saveTurmaEvents() {
+      const storageKey = `turma_events_${selectedTurma}`;
+      localStorage.setItem(storageKey, JSON.stringify(events));
+    }
+
+    function loginAs(role) {
+      const selectElement = document.getElementById('select-turma');
+      selectedTurma = selectElement.value;
+      const turmaText = selectElement.options[selectElement.selectedIndex].text;
+
+      currentUserRole = role;
+      document.getElementById('current-turma-badge').textContent = turmaText;
+      document.getElementById('login-screen').classList.add('hidden');
+      
+      loadTurmaEvents();
+      updateUIForRole();
+      renderCalendar();
+      renderEventsList();
+    }
+
+    function handleProfLogin(e) {
+      e.preventDefault();
+      const inputPass = document.getElementById('prof-key').value.trim();
+      
+      if (inputPass === 'kennedy60') {
+        loginAs('professor');
+        document.getElementById('prof-key').value = '';
+      } else {
+        alert('Senha incorreta! Digite a senha de professor.');
+      }
+    }
+
+    function logout() {
+      currentUserRole = null;
+      selectedTurma = '';
+      document.getElementById('login-screen').classList.remove('hidden');
+    }
+
+    function updateUIForRole() {
+      const badge = document.getElementById('role-badge');
+      const btnAdd = document.getElementById('btn-add-event');
+      
+      if (currentUserRole === 'professor') {
+        badge.textContent = 'Modo Professor / Gestão';
+        badge.className = 'text-xs px-2 py-0.5 rounded-full font-medium bg-indigo-100 text-indigo-700';
+        btnAdd.classList.remove('hidden');
+      } else {
+        badge.textContent = 'Modo Aluno (Visualização)';
+        badge.className = 'text-xs px-2 py-0.5 rounded-full font-medium bg-slate-100 text-slate-600';
+        btnAdd.classList.add('hidden');
+      }
+    }
+
+    function renderCalendar() {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+
+      document.getElementById('current-month-year').textContent = 
+        new Date(year, month).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+
+      const firstDay = new Date(year, month, 1).getDay();
+      const totalDays = new Date(year, month + 1, 0).getDate();
+      const grid = document.getElementById('calendar-grid');
+      grid.innerHTML = '';
+
+      for (let i = 0; i < firstDay; i++) {
+        grid.innerHTML += `<div class="h-20 sm:h-24 bg-slate-50/50 rounded-xl border border-slate-100"></div>`;
+      }
+
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      for (let day = 1; day <= totalDays; day++) {
+        const monthStr = String(month + 1).padStart(2, '0');
+        const dayStr = String(day).padStart(2, '0');
+        const dateStr = `${year}-${monthStr}-${dayStr}`;
+        const dayEvents = events.filter(e => e.date === dateStr);
+        const isToday = dateStr === todayStr;
+
+        let dayHtml = `
+          <div class="h-20 sm:h-24 p-1.5 sm:p-2 rounded-xl border ${isToday ? 'border-indigo-500 bg-indigo-50/30' : 'border-slate-100 bg-white'} flex flex-col justify-between overflow-hidden">
+            <span class="text-xs font-semibold ${isToday ? 'text-indigo-600' : 'text-slate-700'}">${day}</span>
+            <div class="space-y-1 overflow-y-auto max-h-14">
+        `;
+
+        dayEvents.forEach(ev => {
+          const cat = CATEGORIES[ev.category] || CATEGORIES.aviso;
+          dayHtml += `
+            <div title="${ev.title}" class="${cat.bg} ${cat.text} text-[10px] px-1.5 py-0.5 rounded font-medium truncate">
+              ${ev.title}
+            </div>
+          `;
+        });
+
+        dayHtml += `</div></div>`;
+        grid.innerHTML += dayHtml;
+      }
+      lucide.createIcons();
+    }
+
+    function renderEventsList() {
+      const filter = document.getElementById('filter-category').value;
+      const container = document.getElementById('events-list');
+      container.innerHTML = '';
+
+      let list = [...events].sort((a,b) => new Date(a.date) - new Date(b.date));
+      if (filter !== 'all') list = list.filter(e => e.category === filter);
+
+      if (list.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-400 text-center py-6">Nenhum evento registrado nesta turma.</p>`;
+        return;
+      }
+
+      list.forEach(ev => {
+        const cat = CATEGORIES[ev.category] || CATEGORIES.aviso;
+        const parts = ev.date.split('-');
+        const formattedDate = `${parts[2]}/${parts[1]}/${parts[0]}`;
+        
+        let actions = '';
+        if (currentUserRole === 'professor') {
+          actions = `
+            <button type="button" onclick="deleteEvent('${ev.id}')" class="text-red-400 hover:text-red-600 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+          `;
+        }
+
+        container.innerHTML += `
+          <div class="p-3 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors flex items-start justify-between">
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded ${cat.bg} ${cat.text}">${cat.label}</span>
+                ${ev.subject ? `<span class="text-xs text-slate-500 font-medium">${ev.subject}</span>` : ''}
+              </div>
+              <h4 class="font-semibold text-sm text-slate-900">${ev.title}</h4>
+              <p class="text-xs text-slate-500 mt-1">${ev.desc || ''}</p>
+              <div class="flex items-center gap-1 text-xs text-slate-400 mt-2">
+                <i data-lucide="calendar-days" class="w-3.5 h-3.5"></i> ${formattedDate}
+              </div>
+            </div>
+            <div class="flex items-center gap-1">${actions}</div>
+          </div>
+        `;
+      });
+      lucide.createIcons();
+    }
+
+    function openModal() {
+      document.getElementById('event-form').reset();
+      document.getElementById('event-id').value = '';
+      document.getElementById('event-modal').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('event-modal').classList.add('hidden');
+    }
+
+    function saveEvent(e) {
+      e.preventDefault();
+      const id = document.getElementById('event-id').value || Date.now().toString();
+      const newEv = {
+        id,
+        title: document.getElementById('event-title').value,
+        category: document.getElementById('event-category').value,
+        subject: document.getElementById('event-subject').value,
+        date: document.getElementById('event-date').value,
+        desc: document.getElementById('event-desc').value
+      };
+
+      const index = events.findIndex(x => x.id === id);
+      if (index >= 0) events[index] = newEv;
+      else events.push(newEv);
+
+      saveTurmaEvents();
+      closeModal();
+      renderCalendar();
+      renderEventsList();
+    }
+
+    function deleteEvent(id) {
+      if (!confirm('Deseja realmente remover este evento?')) return;
+      events = events.filter(x => x.id !== id);
+      saveTurmaEvents();
+      renderCalendar();
+      renderEventsList();
+    }
+
+    function prevMonth() { currentDate.setMonth(currentDate.getMonth() - 1); renderCalendar(); }
+    function nextMonth() { currentDate.setMonth(currentDate.getMonth() + 1); renderCalendar(); }
+    function todayMonth() { currentDate = new Date(); renderCalendar(); }
+
+    window.onload = () => {
+      lucide.createIcons();
+    };
+  </script>
+</body>
+</html>
